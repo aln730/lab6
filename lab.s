@@ -2,10 +2,10 @@
 ;****************************************************************
 ;Descriptive comment header goes here.
 ;(What does the program do?)
-;Name:  <Your name here>
-;Date:  <Date completed here>
+;Name: Arnav Gawas
+;Date:  02-19-2026
 ;Class:  CMPE-250
-;Section:  <Your lab section, day, and time here>
+;Section:  01
 ;---------------------------------------------------------------
 ;Keil Simulator Template for KL05
 ;R. W. Melton
@@ -177,6 +177,112 @@ RegInit     PROC  {}
             ENDP    ;RegInit
 ;---------------------------------------------------------------
 ;>>>>> begin subroutine code <<<<<
+
+; GetStringSB
+
+GetStringSB     PROC
+            PUSH    {R2-R7,LR}
+
+            MOV     R2, R0          ; buffer pointer
+            MOV     R3, R1          ; max size
+            SUBS    R3, R3, #1      ; usable chars = R1 - 1
+            MOVS    R4, #0          ; count = 0
+
+GS_Loop
+            BL      GetChar         ; R0 = char
+            MOV     R5, R0
+
+            CMP     R5, #0x0D       ; CR?
+            BEQ     GS_Done
+
+            CMP     R4, R3
+            BGE     GS_Ignore       ; buffer full, ignore
+
+            ; store char
+            STRB    R5, [R2]
+            ADDS    R2, R2, #1
+            ADDS    R4, R4, #1
+
+            ; echo char
+            MOV     R0, R5
+            BL      PutChar
+            B       GS_Loop
+
+GS_Ignore
+            ; read but don't store
+            B       GS_Loop
+
+GS_Done
+            ; null terminate
+            MOVS    R6, #0
+            STRB    R6, [R2]
+
+            ; newline (CR LF)
+            MOVS    R0, #0x0D
+            BL      PutChar
+            MOVS    R0, #0x0A
+            BL      PutChar
+
+            POP     {R2-R7,PC}
+            ENDP
+
+; PutStringSB
+
+PutStringSB     PROC
+            PUSH    {R2-R5,LR}
+
+            MOV     R2, R0      ; ptr
+            MOV     R3, R1      ; max size
+            MOVS    R4, #0      ; count
+
+PS_Loop
+            CMP     R4, R3
+            BGE     PS_Done
+
+            LDRB    R5, [R2]
+            CMP     R5, #0
+            BEQ     PS_Done
+
+            MOV     R0, R5
+            BL      PutChar
+
+            ADDS    R2, R2, #1
+            ADDS    R4, R4, #1
+            B       PS_Loop
+
+PS_Done
+            POP     {R2-R5,PC}
+            ENDP
+
+; PutNumU
+
+PutNumU         PROC
+            PUSH    {R1-R7,LR}
+
+            MOV     R1, #10         ; divisor
+            MOV     R2, R0          ; working value
+            MOV     R3, #0          ; digit count
+
+PN_DivLoop
+            MOV     R0, R2
+            BL      DIVU            ; R0 = quotient, R1 = remainder
+            PUSH    {R1}            ; store remainder
+            ADDS    R3, R3, #1
+            MOV     R2, R0
+            CMP     R2, #0
+            BNE     PN_DivLoop
+
+PN_PrintLoop
+            POP     {R4}
+            ADDS    R4, R4, #'0'
+            MOV     R0, R4
+            BL      PutChar
+            SUBS    R3, R3, #1
+            BNE     PN_PrintLoop
+
+            POP     {R1-R7,PC}
+            ENDP
+
 ;>>>>>   end subroutine code <<<<<
             ALIGN
 ;****************************************************************
